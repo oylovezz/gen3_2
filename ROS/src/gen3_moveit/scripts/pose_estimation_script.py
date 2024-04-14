@@ -104,7 +104,7 @@ def main():
      The function to run the pose estimation service
      """
     rospy.init_node(NODE_NAME)
-    s = rospy.Service('pose_estimation_service', PoseEstimationService, pose_estimation_main)
+    s = rospy.Service('pose_estimation_srv', PoseEstimationService, pose_estimation_main)
     print("Ready to estimate pose!")
     rospy.spin()
 

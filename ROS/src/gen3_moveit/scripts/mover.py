@@ -57,43 +57,15 @@ def plan_trajectory_cartesian(move_group, destination_pose, start_joint_angles):
     move_group.set_start_state(moveit_robot_state)
 
     waypoints = [destination_pose]  # 目标位置姿态作为路径的唯一路径点
-    """ pick_pose = copy.deepcopy(destination_pose)
-    pick_pose.position.z -= 0.075
-    waypoints.append(pick_pose)
-    waypoints.append(destination_pose)
-    place_pose1 = copy.deepcopy(place_pose)
-    place_pose1.position.z += 0.075 # Static value offset to lift up gripper
-    waypoints.append(place_pose)
-    waypoints.append(place_pose1) """
-    
-
-    fraction = 0.0
-    maxtries = 100
-    attempts = 0
-    move_group.set_start_state_to_current_state()
-
-
 
     # 规划直线路径
-    while fraction<1.0 and attempts < maxtries:
-        (plan, fraction) = move_group.compute_cartesian_path(
-            waypoints,  # 路径点
-            0.01,       # 步长
-            0.0         # 跳过碰撞检查
-            )
-        attempts +=1
-        
-        if attempts%10 ==0:
-            rospy.loginfo("still try after" + str(attempts) + "attempts...")
+    (plan, fraction) = move_group.compute_cartesian_path(
+        waypoints,  # 路径点
+        0.01,       # 步长
+        0.0         # 跳过碰撞检查
+    )
 
-    if fraction ==1.0:
-        rospy.loginfo("path computed successfully.moving the arm")
-        return plan  # 返回规划的路径
-
-    else:
-        rospy.loginfo("path planning failed with only" + str(fraction) + "success after" + str(maxtries) + "attempts..")
-
-
+    return plan  # 返回规划的路径
 
 
 """
@@ -132,27 +104,27 @@ def plan_pick_and_place(req):
     # Grasp - lower gripper so that fingers are on either side of object
     pick_pose = copy.deepcopy(req.pick_pose)
     pick_pose.position.z -= 0.075  # Static value coming from Unity, TODO: pass along with request
-    grasp_pose = plan_trajectory(move_group, pick_pose, previous_ending_joint_angles)
+    grasp_pose = plan_trajectory_cartesian(move_group, pick_pose, previous_ending_joint_angles)
 
     previous_ending_joint_angles = grasp_pose.joint_trajectory.points[-1].positions
     response.trajectories.append(grasp_pose)
 
     # Pick Up - raise gripper back to the pre grasp position
-    pick_up_pose = plan_trajectory(move_group, req.pick_pose, previous_ending_joint_angles)
+    pick_up_pose = plan_trajectory_cartesian(move_group, req.pick_pose, previous_ending_joint_angles)
 
     previous_ending_joint_angles = pick_up_pose.joint_trajectory.points[-1].positions
     response.trajectories.append(pick_up_pose)
 
     # Place - move gripper to desired placement position
-    place_pose = plan_trajectory(move_group, req.place_pose, previous_ending_joint_angles)
+    place_pose = plan_trajectory_cartesian(move_group, req.place_pose, previous_ending_joint_angles)
 
     previous_ending_joint_angles = place_pose.joint_trajectory.points[-1].positions
     response.trajectories.append(place_pose)
 
     # Post place - lift gripper after placement position
     place_pose = copy.deepcopy(req.place_pose)
-    place_pose.position.z += 0.075 # Static value offset to lift up gripper
-    post_place_pose = plan_trajectory(move_group, place_pose, previous_ending_joint_angles)
+    place_pose.position.z += 0.05 # Static value offset to lift up gripper
+    post_place_pose = plan_trajectory_cartesian(move_group, place_pose, previous_ending_joint_angles)
 
     previous_ending_joint_angles = post_place_pose.joint_trajectory.points[-1].positions
     response.trajectories.append(post_place_pose)

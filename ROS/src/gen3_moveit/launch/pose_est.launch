@@ -1,7 +1,15 @@
 <launch>
+    <arg name="tcp_ip" default="192.168.137.87"/>
+    <arg name="tcp_port" default="10000"/>
+	
     <rosparam file="$(find gen3_moveit)/config/params.yaml" command="load"/>
     '<include file="$(find gen3_robotiq_2f_140_move_it_config)/launch/demo.launch" />
-    <node name="server_endpoint" pkg="gen3_moveit" type="server_endpoint.py" args="--wait" output="screen" respawn="true" />
+
+    <node name="server_endpoint" pkg="ros_tcp_endpoint" type="default_server_endpoint.py" args="--wait" output="screen" respawn="true">
+		<param name="tcp_ip" type="string" value="$(arg tcp_ip)"/>
+        <param name="tcp_port" type="int" value="$(arg tcp_port)"/>
+	</node>
+
     <node name="pose_estimation" pkg="gen3_moveit" type="pose_estimation_script.py" args="--wait" output="screen"/>
     <node name="mover" pkg="gen3_moveit" type="mover.py" args="--wait" output="screen" respawn="true" respawn_delay="2.0"/>
 

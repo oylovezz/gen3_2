@@ -9,7 +9,6 @@ using RosMessageTypes.Gen3Moveit;
 using Quaternion = UnityEngine.Quaternion;
 using Transform = UnityEngine.Transform;
 using Vector3 = UnityEngine.Vector3;
-
 public class TrajectoryPlanner : MonoBehaviour
 {
     // ROS Connector
@@ -168,7 +167,7 @@ public class TrajectoryPlanner : MonoBehaviour
         uint imageHeight = (uint)renderTexture.height;
         uint imageWidth = (uint)renderTexture.width;
 
-        RosMessageTypes.Sensor.Image rosImage = new RosMessageTypes.Sensor.Image(new RosMessageTypes.Std.Header(), imageWidth, imageHeight, "RGBA", isBigEndian, step, imageData);
+        RosMessageTypes.Sensor.ImageMsg rosImage = new RosMessageTypes.Sensor.ImageMsg(new RosMessageTypes.Std.HeaderMsg(), imageWidth, imageHeight, "RGBA", isBigEndian, step, imageData);
         PoseEstimationServiceRequest poseServiceRequest = new PoseEstimationServiceRequest(rosImage);
         ros.SendServiceMessage<PoseEstimationServiceResponse>("pose_estimation_srv", poseServiceRequest, PoseEstimationCallback);
     }
@@ -216,10 +215,10 @@ public class TrajectoryPlanner : MonoBehaviour
     /// <summary>
     ///     获取机器人关节角度的当前值.
     /// </summary>
-    /// <returns>Gen3MoveitJoints</returns>
-    Gen3MoveitJoints CurrentJointConfig()
+    /// <returns>Gen3MoveitJointsMsg</returns>
+    Gen3MoveitJointsMsg CurrentJointConfig()
     {
-        Gen3MoveitJoints joints = new Gen3MoveitJoints();
+        Gen3MoveitJointsMsg joints = new Gen3MoveitJointsMsg();
 
         joints.joint_00 = jointArticulationBodies[0].xDrive.target;
         joints.joint_01 = jointArticulationBodies[1].xDrive.target;
@@ -237,14 +236,14 @@ public class TrajectoryPlanner : MonoBehaviour
         request.joints_input = CurrentJointConfig();
 
         // Pick Pose
-        request.pick_pose = new RosMessageTypes.Geometry.Pose
+        request.pick_pose = new RosMessageTypes.Geometry.PoseMsg
         {
             position = (targetPos + pickPoseOffset).To<FLU>(),
             orientation = Quaternion.Euler(-180, targetRot.eulerAngles.y, 0).To<FLU>()
         };
 
         // Place Pose
-        request.place_pose = new RosMessageTypes.Geometry.Pose
+        request.place_pose = new RosMessageTypes.Geometry.PoseMsg
         {
             position = (goal.position + placePoseOffset).To<FLU>(),
             orientation = pickOrientation.To<FLU>()
@@ -373,7 +372,9 @@ public class TrajectoryPlanner : MonoBehaviour
     void Start()
     {
         // 获取ROS连接静态实例
-        ros = ROSConnection.instance;
+        ros = ROSConnection.GetOrCreateInstance();
+        ros.RegisterRosService<PoseEstimationServiceRequest,PoseEstimationServiceResponse>("pose_estimation_srv");
+        ros.RegisterRosService<MoverServiceRequest,MoverServiceResponse>(rosServiceName);
 
         // 分配 UI 元素
         InitializeButton = GameObject.Find("ROSObjects/Canvas/ButtonPanel/DefaultButton").GetComponent<Button>();

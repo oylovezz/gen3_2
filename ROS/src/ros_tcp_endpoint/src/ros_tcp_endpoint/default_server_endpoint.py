@@ -1,15 +1,14 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import rospy
 
 from ros_tcp_endpoint import TcpServer
 
-def main():
-    ros_node_name = rospy.get_param("/TCP_NODE_NAME", 'TCPServer')
-    tcp_server = TcpServer(ros_node_name)
 
+def main(args=None):
     # Start the Server Endpoint
-    rospy.init_node(ros_node_name, anonymous=True)
+    rospy.init_node("unity_endpoint", anonymous=True)
+    tcp_server = TcpServer(rospy.get_name())
     tcp_server.start()
     rospy.spin()
 

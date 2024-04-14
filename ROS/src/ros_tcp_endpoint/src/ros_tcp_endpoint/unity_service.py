@@ -14,6 +14,7 @@
 
 import rospy
 import socket
+import re
 
 from .communication import RosReceiver
 from .client import ClientThread
@@ -23,6 +24,7 @@ class UnityService(RosReceiver):
     """
     Class to register a ROS service that's implemented in Unity.
     """
+
     def __init__(self, topic, service_class, tcp_server, queue_size=10):
         """
 
@@ -31,16 +33,17 @@ class UnityService(RosReceiver):
             service_class: The message class in catkin workspace
             queue_size:    Max number of entries to maintain in an outgoing queue
         """
+        strippedTopic = re.sub("[^A-Za-z0-9_]+", "", topic)
+        self.node_name = "{}_service".format(strippedTopic)
+
         self.topic = topic
-        self.node_name = "{}_service".format(topic)
         self.service_class = service_class
         self.tcp_server = tcp_server
         self.queue_size = queue_size
 
-        # Start Subscriber listener function
         self.service = rospy.Service(self.topic, self.service_class, self.send)
 
-    def send(self, data):
+    def send(self, request):
         """
         Connect to TCP endpoint on client, pass along message and get reply
         Args:
@@ -49,7 +52,7 @@ class UnityService(RosReceiver):
         Returns:
             The response message
         """
-        return self.tcp_server.send_unity_service(self.topic, self.service_class, data)
+        return self.tcp_server.send_unity_service(self.topic, self.service_class, request)
 
     def unregister(self):
         """
@@ -57,4 +60,4 @@ class UnityService(RosReceiver):
         Returns:
 
         """
-        self.service.unregister()
+        self.service.shutdown()
