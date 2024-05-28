@@ -1,5 +1,5 @@
 <launch>
-    <arg name="tcp_ip" default="192.168.137.87"/>
+    <arg name="tcp_ip" default="192.168.137.186"/>
     <arg name="tcp_port" default="10000"/>
 	
     <rosparam file="$(find gen3_moveit)/config/params.yaml" command="load"/>
@@ -11,7 +11,7 @@
 	</node>
 
     <node name="pose_estimation" pkg="gen3_moveit" type="pose_estimation_script.py" args="--wait" output="screen"/>
-    <node name="mover" pkg="gen3_moveit" type="mover.py" args="--wait" output="screen" respawn="true" respawn_delay="2.0"/>
+
 
     
 </launch>
