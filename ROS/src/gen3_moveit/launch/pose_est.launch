@@ -1,5 +1,5 @@
 <launch>
-    <arg name="tcp_ip" default="192.168.137.186"/>
+    <arg name="tcp_ip" default="172.16.99.54"/>
     <arg name="tcp_port" default="10000"/>
 	
     <rosparam file="$(find gen3_moveit)/config/params.yaml" command="load"/>
